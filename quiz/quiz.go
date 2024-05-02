@@ -1,4 +1,4 @@
-package gophercises
+package main
 
 import (
 	"encoding/csv"
@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	file, err := os.Open("quiz.csv")
+	file, err := os.Open("problems.csv")
 	if err != nil {
 		fmt.Println("Error: ", err)
 		return
@@ -19,6 +19,7 @@ func main() {
 	reader := csv.NewReader(file)
 
 	//Enumerate CSV records
+	counter := 0
 	for {
 		record, err := reader.Read()
 		if err == io.EOF {
@@ -28,6 +29,15 @@ func main() {
 			fmt.Println("Error: ", err)
 			return
 		}
-		fmt.Println(record)
+		quiz(record, counter)
+		counter++
+	}
+}
+
+func quiz(record []string, num int) {
+	if len(record) >= 2 {
+		question := record[0]
+		answer := record[1]
+		fmt.Println("Problem: ", question)
 	}
 }
