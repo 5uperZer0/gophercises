@@ -20,6 +20,7 @@ func main() {
 
 	//Enumerate CSV records
 	counter := 0
+	score := 0
 	for {
 		record, err := reader.Read()
 		if err == io.EOF {
@@ -29,21 +30,24 @@ func main() {
 			fmt.Println("Error: ", err)
 			return
 		}
-		question(record, counter)
+		if len(record) >= 2 {
+			score += question(record, counter)
+		} else {
+			break
+		}
 		counter++
 	}
+	fmt.Printf("You scored %d/12!\n", score)
 }
 
-func question(record []string, num int) bool {
-	if len(record) >= 2 {
-		var userInput string
-		question := record[0]
-		answer := record[1]
-		fmt.Printf("Problem #", num+1, ": ", question, " = ")
-		fmt.Scan(&userInput)
-		if userInput == answer {
-			return true
-		}
-		return false
+func question(record []string, num int) int {
+	var userInput string
+	question := record[0]
+	answer := record[1]
+	fmt.Printf("Problem #%d: %s = ", num+1, question)
+	fmt.Scanln(&userInput)
+	if userInput == answer {
+		return 1
 	}
+	return 0
 }
