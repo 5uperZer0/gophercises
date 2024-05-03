@@ -29,15 +29,21 @@ func main() {
 			fmt.Println("Error: ", err)
 			return
 		}
-		quiz(record, counter)
+		question(record, counter)
 		counter++
 	}
 }
 
-func quiz(record []string, num int) {
+func question(record []string, num int) bool {
 	if len(record) >= 2 {
+		var userInput string
 		question := record[0]
 		answer := record[1]
-		fmt.Println("Problem: ", question)
+		fmt.Printf("Problem #", num+1, ": ", question, " = ")
+		fmt.Scan(&userInput)
+		if userInput == answer {
+			return true
+		}
+		return false
 	}
 }
