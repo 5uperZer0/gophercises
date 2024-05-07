@@ -12,9 +12,10 @@ import (
 
 func main() {
 
+	// Process flags
 	var shuffle bool
-
 	flag.BoolVar(&shuffle, "r", false, "Randomize questions")
+	timeLimit := flag.Int("limit", 3, "the time limit for the quiz in seconds")
 	csvFilename := flag.String("csv", "problems.csv", "A csv file in the format of 'question, answer'")
 	flag.Parse()
 
@@ -44,35 +45,40 @@ func main() {
 		}
 	}
 
+	// Instantiate quiz timer
+	timer := time.NewTimer(time.Duration(*timeLimit) * time.Second)
+	defer timer.Stop()
+
 	// Run quiz loop!
 	round := 0
 	score := 0
+
 	for _, record := range csv_records {
-		prob := problem{
-			q: record[0],
-			a: record[1],
+
+		fmt.Printf("Problem #%d: %s = ", round+1, record[0])
+		answer_ch := make(chan string)
+		go func() {
+			var in string
+			fmt.Scanln(&in)
+			in = strings.ReplaceAll(in, " ", "")
+			answer_ch <- in
+		}()
+
+		select {
+		case <-timer.C:
+			fmt.Printf("\nYou scored %d/12!\n", score)
+			return
+		case answer := <-answer_ch:
+			if answer == record[1] {
+				fmt.Println("Correct!")
+				score++
+			} else {
+				score++
+			}
 		}
-		score += question(prob, round)
-		round++
 	}
 
 	// Print score and exit
-	fmt.Printf("You scored %d/12!\n", score)
+	fmt.Printf("\nYou scored %d/12!\n", score)
 	os.Exit(0)
-}
-
-type problem struct {
-	q string
-	a string
-}
-
-func question(record problem, num int) int {
-	var userInput string
-	fmt.Printf("Problem #%d: %s = ", num+1, record.q)
-	fmt.Scanln(&userInput)
-	userInput = strings.ReplaceAll(userInput, " ", "")
-	if userInput == record.a {
-		return 1
-	}
-	return 0
 }
