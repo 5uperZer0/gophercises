@@ -72,8 +72,6 @@ func main() {
 			if answer == record[1] {
 				fmt.Println("Correct!")
 				score++
-			} else {
-				score++
 			}
 		}
 	}
