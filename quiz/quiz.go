@@ -4,7 +4,6 @@ import (
 	"encoding/csv"
 	"flag"
 	"fmt"
-	"io"
 	"math/rand"
 	"os"
 	"strings"
@@ -16,12 +15,13 @@ func main() {
 	var shuffle bool
 
 	flag.BoolVar(&shuffle, "r", false, "Randomize questions")
+	csvFilename := flag.String("csv", "problems.csv", "A csv file in the format of 'question, answer'")
 	flag.Parse()
 
-	file, err := os.Open("problems.csv")
+	file, err := os.Open(*csvFilename)
 	if err != nil {
-		fmt.Println("Error: ", err)
-		return
+		fmt.Printf("Failed to open the CSV file: %s", *csvFilename)
+		os.Exit(1)
 	}
 	defer file.Close()
 
@@ -29,52 +29,49 @@ func main() {
 	reader := csv.NewReader(file)
 
 	//Enumerate CSV records
-	var csv_records [][]string
-	counter := 0
-	score := 0
-	for {
-		record, err := reader.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			fmt.Println("Error: ", err)
-			return
-		}
-		if len(record) >= 2 {
-			csv_records = append(csv_records, record)
-		} else {
-			continue
-		}
+	csv_records, err := reader.ReadAll()
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return
 	}
+
+	// Shuffle questions if necessary
 	if shuffle {
 		rand.New(rand.NewSource(time.Now().Unix()))
 		for i := len(csv_records) - 1; i > 0; i-- {
 			j := rand.Intn(i + 1)
 			csv_records[i], csv_records[j] = csv_records[j], csv_records[i]
 		}
-		for _, record := range csv_records {
-			score += question(record, counter)
-			counter++
-		}
-	} else {
-		for _, record := range csv_records {
-			score += question(record, counter)
-			counter++
-		}
 	}
 
+	// Run quiz loop!
+	round := 0
+	score := 0
+	for _, record := range csv_records {
+		prob := problem{
+			q: record[0],
+			a: record[1],
+		}
+		score += question(prob, round)
+		round++
+	}
+
+	// Print score and exit
 	fmt.Printf("You scored %d/12!\n", score)
+	os.Exit(0)
 }
 
-func question(record []string, num int) int {
+type problem struct {
+	q string
+	a string
+}
+
+func question(record problem, num int) int {
 	var userInput string
-	question := record[0]
-	answer := record[1]
-	fmt.Printf("Problem #%d: %s = ", num+1, question)
+	fmt.Printf("Problem #%d: %s = ", num+1, record.q)
 	fmt.Scanln(&userInput)
 	userInput = strings.ReplaceAll(userInput, " ", "")
-	if userInput == answer {
+	if userInput == record.a {
 		return 1
 	}
 	return 0
